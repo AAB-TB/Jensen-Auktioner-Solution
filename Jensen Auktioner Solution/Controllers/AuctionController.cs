@@ -119,13 +119,13 @@ namespace Jensen_Auktioner_Solution.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
-        [HttpPut("{auctionid}")]
+        [HttpPut("{auctionId}")]
         [Authorize(Roles = "Admin,Customer")]
-        public async Task<IActionResult> UpdateAuction(int id, [FromBody] AuctionDto auctionDto)
+        public async Task<IActionResult> UpdateAuction(int auctionId, [FromBody] AuctionDto auctionDto)
         {
             try
             {
-                var updatedAuction = await _auctionService.UpdateAuctionAsync(id, auctionDto);
+                var updatedAuction = await _auctionService.UpdateAuctionAsync(auctionId, auctionDto);
 
                 if (updatedAuction != null)
                 {
@@ -133,11 +133,19 @@ namespace Jensen_Auktioner_Solution.Controllers
                 }
                 else
                 {
-                    return BadRequest("Auction update failed due to validation errors.");
+                    // Depending on the nature of validation errors, you might want to provide more specific details
+                    return BadRequest("Auction update failed due to validation errors or existing bids.");
                 }
+            }
+            catch (ApplicationException appEx)
+            {
+                // Handle application-specific exceptions (e.g., custom validation)
+                _logger.LogError($"Error in UpdateAuction: {appEx.Message}");
+                return BadRequest(appEx.Message);
             }
             catch (Exception ex)
             {
+                // Log unexpected errors
                 _logger.LogError($"Error in UpdateAuction: {ex.Message}");
                 return StatusCode(500, "Internal server error");
             }

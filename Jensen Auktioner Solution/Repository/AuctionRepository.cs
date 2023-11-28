@@ -6,6 +6,7 @@ using Jensen_Auktioner_Solution.Dto.Bid;
 using Jensen_Auktioner_Solution.Dto.Role;
 using Jensen_Auktioner_Solution.Model;
 using Jensen_Auktioner_Solution.Service;
+using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Security.Claims;
 
@@ -151,10 +152,18 @@ namespace Jensen_Auktioner_Solution.Repository
                     );
                 }
             }
+            catch (SqlException ex) when (ex.Number == 51003)
+            {
+                // Handle the specific case where the stored procedure throws an exception with error code 51003
+                _logger.LogError($"Error in RemoveAuctionAsync: {ex.Message}");
+                // You might want to log or handle this specific error differently
+                throw new ApplicationException("Cannot delete auction with bids. Remove bids first.");
+            }
             catch (Exception ex)
             {
+                // Log and rethrow other exceptions
                 _logger.LogError($"Error in RemoveAuctionAsync: {ex.Message}");
-                throw; // Rethrow the exception to the calling code
+                throw;
             }
         }
 

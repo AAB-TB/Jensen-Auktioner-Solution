@@ -3,6 +3,7 @@ using Jensen_Auktioner_Solution.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Jensen_Auktioner_Solution.Controllers
 {
@@ -36,12 +37,12 @@ namespace Jensen_Auktioner_Solution.Controllers
             }
         }
         [HttpGet("winning/{auctionId}")]
-        [Authorize(Roles = "Admin,Customer")]
-        public async Task<IActionResult> GetWinningBid(int auctionId)
+       
+        public async Task<IActionResult> GetAuctionDetailsWithWinningBid(int auctionId)
         {
             try
             {
-                var winningBid = await _bidService.GetWinningBidAsync(auctionId);
+                var winningBid = await _bidService.GetAuctionDetailsWithWinningBidAsync(auctionId);
 
                 if (winningBid != null)
                 {
@@ -60,11 +61,16 @@ namespace Jensen_Auktioner_Solution.Controllers
         }
         [HttpPost]
         [Authorize(Roles = "Admin,Customer")]
-        public async Task<IActionResult> PlaceBid(int auctionId, [FromBody] BidDto bidDto)
+        public async Task<IActionResult> PlaceBid(int auctionId, decimal price)
         {
             try
             {
-                var placedBid = await _bidService.PlaceBidAsync(auctionId, bidDto);
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return Unauthorized("User not authenticated.");
+                }
+                var placedBid = await _bidService.PlaceBidAsync(auctionId, price,userId);
 
                 if (placedBid != null)
                 {
@@ -81,13 +87,13 @@ namespace Jensen_Auktioner_Solution.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
-        [HttpDelete("{id}")]
+        [HttpDelete("{auctionId}/{userId}")]
         [Authorize(Roles = "Admin,Customer")]
-        public async Task<IActionResult> RemoveBid(int id)
+        public async Task<IActionResult> RemoveBid(int auctionId, int userId)
         {
             try
             {
-                await _bidService.RemoveBidAsync(id);
+                await _bidService.RemoveBidAsync(auctionId, userId);
                 return NoContent(); // 204 No Content
             }
             catch (Exception ex)
@@ -96,6 +102,7 @@ namespace Jensen_Auktioner_Solution.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
 
     }
 }
