@@ -1,0 +1,6 @@
+@Jensen_Auktioner_Solution_HostAddress = http://localhost:5021
+
+GET {{Jensen_Auktioner_Solution_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
